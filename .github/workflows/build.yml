@@ -8,6 +8,19 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 2s
+          --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgres://postgres:ci@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v7
 
@@ -27,14 +40,25 @@ jobs:
 
       - run: docker build -t visio-side-service:ci .
 
-      - name: Start the image
-        run: docker run -d --name vss -p 8080:8080 -e HS_TOKEN=ci visio-side-service:ci
+      - name: Start the image and its database
+        run: |
+          docker network create ci
+          docker run -d --name db --network ci -e POSTGRES_PASSWORD=ci postgres:17-alpine
+          # Over TCP: the socket answers while the init server still refuses connections
+          until docker exec db pg_isready -h 127.0.0.1 -q; do sleep 1; done
+          docker run -d --name vss --network ci -p 8080:8080 \
+            -e HS_TOKEN=ci \
+            -e DATABASE_URL=postgres://postgres:ci@db:5432/postgres \
+            visio-side-service:ci
 
       - name: Probe it
         run: |
           # Docker's port proxy resets connections until the server listens.
           curl -fs --retry 30 --retry-all-errors --retry-delay 1 localhost:8080/health/live
+          curl -fs localhost:8080/health/ready
           test "$(docker exec vss id -u)" != 0
 
       - if: failure()
-        run: docker logs vss
+        run: |
+          docker logs vss
+          docker logs db

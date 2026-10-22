@@ -29,14 +29,24 @@ port 8080.
 ## Probes
 
 - Liveness: `GET /health/live`
-- Readiness: `GET /health/ready`
+- Readiness: `GET /health/ready`, 503 while Postgres does not answer within
+  2 seconds.
 
 Every other request needs the `hs_token`.
 
 ## Environment
 
 - `HS_TOKEN` (required): the `hs_token` of the registration.
+- `DATABASE_URL` (required): the Postgres database, for example
+  `postgres://visio:secret@postgresql:5432/visio`.
 - `PORT`: 8080 by default.
+
+## Postgres
+
+A database of its own. The service creates its single table, `call_rooms`
+(the Meet room of each call slot of a Matrix room), at startup, so its user
+needs the right to create tables. It exits when the database cannot be reached
+at startup. Several replicas can share the database.
 
 ## Synapse
 
