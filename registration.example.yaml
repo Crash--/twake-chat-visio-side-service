@@ -1,5 +1,5 @@
 # Synapse registration of the service (app_service_config_files).
-# Both tokens are secrets. The service reads hs_token as HS_TOKEN.
+# Both tokens are secrets, given to the service as HS_TOKEN and AS_TOKEN.
 id: twake-chat-visio
 as_token: "<AS_TOKEN>"
 hs_token: "<HS_TOKEN>"

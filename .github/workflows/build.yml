@@ -46,9 +46,14 @@ jobs:
           docker run -d --name db --network ci -e POSTGRES_PASSWORD=ci postgres:17-alpine
           # Over TCP: the socket answers while the init server still refuses connections
           until docker exec db pg_isready -h 127.0.0.1 -q; do sleep 1; done
+          # Only the database is reached at startup
           docker run -d --name vss --network ci -p 8080:8080 \
-            -e HS_TOKEN=ci \
+            -e HS_TOKEN=ci -e AS_TOKEN=ci \
+            -e HOMESERVER_URL=http://synapse -e LIVEKIT_URL=wss://livekit \
             -e DATABASE_URL=postgres://postgres:ci@db:5432/postgres \
+            -e MEET_URL=http://meet -e MEET_CLIENT_ID=ci -e MEET_CLIENT_SECRET=ci \
+            -e MEET_SERVICE_ACCOUNT_EMAIL=calls@example.org \
+            -e LDAP_URL=ldap://ldap -e LDAP_BASE=dc=example,dc=org \
             visio-side-service:ci
 
       - name: Probe it
