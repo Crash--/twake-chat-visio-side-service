@@ -28,7 +28,7 @@ jobs:
       - run: docker build -t visio-side-service:ci .
 
       - name: Start the image
-        run: docker run -d --name vss -p 8080:8080 visio-side-service:ci
+        run: docker run -d --name vss -p 8080:8080 -e HS_TOKEN=ci visio-side-service:ci
 
       - name: Probe it
         run: |

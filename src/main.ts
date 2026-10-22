@@ -1,8 +1,10 @@
-import { handle } from "./server.ts";
+import { readConfig } from "./config.ts";
+import { makeHandler } from "./server.ts";
 
+const config = readConfig();
 const server = Bun.serve({
-  port: process.env.PORT || 8080,
-  fetch: handle,
+  port: config.port,
+  fetch: makeHandler(config),
 });
 console.log(`listening on ${server.url}`);
 
