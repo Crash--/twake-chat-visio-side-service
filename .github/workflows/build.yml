@@ -1,0 +1,40 @@
+name: Build and test
+
+on:
+  workflow_call:
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+
+  image:
+    name: Image smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: docker build -t visio-side-service:ci .
+
+      - name: Start the image
+        run: docker run -d --name vss -p 8080:8080 visio-side-service:ci
+
+      - name: Probe it
+        run: |
+          # Docker's port proxy resets connections until the server listens.
+          curl -fs --retry 30 --retry-all-errors --retry-delay 1 localhost:8080/health/live
+          test "$(docker exec vss id -u)" != 0
+
+      - if: failure()
+        run: docker logs vss

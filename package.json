@@ -1,0 +1,21 @@
+{
+  "name": "twake-chat-visio-side-service",
+  "version": "0.1.0",
+  "description": "Matrix application service that issues Twake Chat call tokens through Meet",
+  "type": "module",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "packageManager": "bun@1.4.4",
+  "scripts": {
+    "start": "bun run src/main.ts",
+    "test": "bun test",
+    "lint": "biome ci .",
+    "type-check": "tsc --noEmit",
+    "check": "bun run lint && bun run type-check && bun test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.2",
+    "@types/bun": "^1.4.3",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,29 @@
+name: Push
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-latest
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Build and Test
+    uses: ./.github/workflows/build.yml
+
+  publish:
+    needs: [test]
+    # A fork cannot publish: its image name would hold the owner of the fork
+    if: github.repository_owner == 'linagora'
+    permissions:
+      contents: read
+      packages: write
+    name: Publish latest tag
+    uses: ./.github/workflows/publish.yml
+    with:
+      tag: latest

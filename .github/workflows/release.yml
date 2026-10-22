@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build and Test
+    uses: ./.github/workflows/build.yml
+
+  version:
+    name: Tag matches package.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: test "v$(jq -r .version package.json)" = "$GITHUB_REF_NAME"
+
+  publish:
+    needs: [test, version]
+    if: github.repository_owner == 'linagora'
+    permissions:
+      contents: read
+      packages: write
+    name: Publish tagged release
+    uses: ./.github/workflows/publish.yml
+    with:
+      tag: ${{ github.ref_name }}
+
+  release:
+    needs: [publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: true
